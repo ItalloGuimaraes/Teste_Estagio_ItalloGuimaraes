@@ -9,7 +9,7 @@ from src.processor import process_data
 
 def main():
     print("===================================================")
-    print("   INICIANDO TESTE 1: ETL DADOS ANS")
+    print("        INICIANDO TESTE 1: ETL DADOS ANS")
     print("===================================================")
     
     # Passo 1: Extração (Crawler)
@@ -28,9 +28,9 @@ def main():
         print(f"ERRO CRÍTICO NO PROCESSADOR: {e}")
         return
 
-    print("\n===================================================")
-    print("   SUCESSO! Arquivo 'consolidado_despesas.zip' gerado.")
-    print("===================================================")
+    print("\n======================================================")
+    print("   SUCESSO! Arquivo 'consolidado_despesas.csv' gerado.")
+    print("======================================================")
 
 if __name__ == "__main__":
     main()
