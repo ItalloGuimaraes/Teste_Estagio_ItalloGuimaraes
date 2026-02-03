@@ -81,7 +81,6 @@ Conforme solicitado, o sistema audita os dados e loga os seguintes cenários no 
     ├── __init__.py
     ├── scraper.py           # Módulo de download (Web Scraping)
     └── processor.py         # Módulo de ETL e Regras de Negócio
----
 
-👤 Autor
+###👤 Autor
 Ítallo de Santana Guimarães
