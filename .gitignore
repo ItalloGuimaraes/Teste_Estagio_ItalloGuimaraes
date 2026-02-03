@@ -1,33 +1,43 @@
-# Regras para o Teste 1
-# Ignorar dados brutos e extraídos
-data/
-1_Leitura_Transformacao_Dados/data/
+# --- ARQUIVOS DE SISTEMA E IDE ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
 
-# Regras para o Teste 2
-2_Transformacao_Validacao/data/*
-!2_Transformacao_Validacao/data/.gitkeep
-
-# Ignorar arquivos temporários do Python
+# --- LINGUAGEM PYTHON ---
 __pycache__/
 *.py[cod]
+*.log
+.pytest_cache/
 
-# Ignorar ambientes virtuais
+# --- AMBIENTES VIRTUAIS ---
 .venv/
 venv/
 env/
 
-# Ignorar configurações do editor
-.vscode/
-.idea/
-
-# Ignorar arquivos de sistema
-.DS_Store
-Thumbs.db
-
-# Ignorar arquivos de dados gerados (Output)
+# --- DADOS E ARQUIVOS GERADOS ---
 *.csv
 *.zip
 *.pdf
+*.xlsx
+*.json
 
-# Mas permitir arquivos de documentação se houver (opcional)
-!documentation/*.pdf
+# --- REGRAS ESPECÍFICAS POR MÓDULO ---
+
+# Teste 1: Leitura e Transformação
+1_Leitura_Transformacao_Dados/data/
+
+# Teste 2: Transformação e Validação
+# Ignora tudo dentro de data, exceto o .gitkeep
+2_Transformacao_Validacao/data/*
+!2_Transformacao_Validacao/data/.gitkeep
+
+# Teste 3: Banco de Dados
+3_Banco_de_Dados/*.sql.gz
+
+# Teste 4: API e Visualização
+# Previne envio de banco de dados SQLite local ou logs
+*.sqlite3
+*.db
+4_API_Visualizacao/backend/*.log

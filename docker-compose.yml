@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  # Serviço da API (Backend)
+  api:
+    build: ./4_API_Visualizacao/backend
+    container_name: ans_api
+    volumes:
+      # Mapeia as pastas de dados do seu PC para dentro do container
+      # Assim a API consegue ler os CSVs gerados nos testes anteriores
+      - ./1_Leitura_Transformacao_Dados:/1_Leitura_Transformacao_Dados
+      - ./2_Transformacao_Validacao:/2_Transformacao_Validacao
+    ports:
+      - "8000:8000"
+    networks:
+      - ans-network
+
+  # Serviço do Frontend (Site)
+  frontend:
+    image: nginx:alpine
+    container_name: ans_frontend
+    volumes:
+      # Monta o arquivo HTML dentro do servidor Nginx
+      - ./4_API_Visualizacao/frontend:/usr/share/nginx/html
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - ans-network
+
+networks:
+  ans-network:
+    driver: bridge

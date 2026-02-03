@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANS Dashboard - Teste 4</title>
+    
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div id="app" class="min-h-screen">
+        
+        <header class="bg-blue-800 text-white p-6 shadow-lg">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold"><i class="fas fa-chart-line mr-2"></i>Portal Transparência ANS</h1>
+                <span class="text-sm bg-blue-700 px-3 py-1 rounded-full">Status API: {{ apiStatus }}</span>
+            </div>
+        </header>
+
+        <main class="container mx-auto p-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Despesas por Estado (Top 5)</h2>
+                    <canvas id="chartUF"></canvas>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-center items-center text-center">
+                    <i class="fas fa-database text-4xl text-blue-500 mb-4"></i>
+                    <h3 class="text-xl font-bold">Dados Consolidados</h3>
+                    <p class="text-gray-600 mt-2">Visualize operadoras ativas e seus históricos financeiros trimestrais.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-6 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                    <h2 class="text-xl font-bold text-gray-800">Operadoras Registradas</h2>
+                    
+                    <div class="relative w-full md:w-1/3">
+                        <input 
+                            v-model="searchQuery" 
+                            @input="debounceSearch"
+                            type="text" 
+                            placeholder="Buscar por Razão Social ou Registro..." 
+                            class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-600 uppercase text-sm">
+                                <th class="p-4 border-b">Registro ANS</th>
+                                <th class="p-4 border-b">CNPJ</th>
+                                <th class="p-4 border-b">Razão Social</th>
+                                <th class="p-4 border-b">UF</th>
+                                <th class="p-4 border-b">Modalidade</th>
+                                <th class="p-4 border-b">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-if="loading" class="text-center"><td colspan="6" class="p-8">Carregando dados...</td></tr>
+                            <tr v-else-if="operadoras.length === 0" class="text-center"><td colspan="6" class="p-8">Nenhum registro encontrado.</td></tr>
+                            
+                            <tr v-for="op in operadoras" :key="op.RegistroANS" class="hover:bg-gray-50 border-b last:border-0">
+                                <td class="p-4 font-mono text-blue-600">{{ op.RegistroANS }}</td>
+                                <td class="p-4">{{ op.CNPJ }}</td>
+                                <td class="p-4 font-medium">{{ op.RazaoSocial }}</td>
+                                <td class="p-4"><span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">{{ op.UF }}</span></td>
+                                <td class="p-4 text-sm text-gray-600">{{ op.Modalidade }}</td>
+                                <td class="p-4">
+                                    <button @click="abrirDetalhes(op)" class="text-blue-500 hover:text-blue-700 font-semibold text-sm">
+                                        Ver Detalhes
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-4 bg-gray-50 flex justify-between items-center border-t">
+                    <button 
+                        @click="mudarPagina(page - 1)" 
+                        :disabled="page === 1"
+                        class="px-4 py-2 bg-white border rounded disabled:opacity-50 hover:bg-gray-100"
+                    >Anterior</button>
+                    
+                    <span class="text-gray-600">Página {{ page }} de {{ totalPages }}</span>
+                    
+                    <button 
+                        @click="mudarPagina(page + 1)" 
+                        :disabled="page === totalPages"
+                        class="px-4 py-2 bg-white border rounded disabled:opacity-50 hover:bg-gray-100"
+                    >Próxima</button>
+                </div>
+            </div>
+
+            <div v-if="modalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
+                <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <div class="p-6 border-b flex justify-between items-center">
+                        <h3 class="text-xl font-bold">{{ operadoraSelecionada?.RazaoSocial }}</h3>
+                        <button @click="modalOpen = false" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div><p class="text-gray-500 text-sm">CNPJ</p><p class="font-mono">{{ operadoraSelecionada?.CNPJ }}</p></div>
+                            <div><p class="text-gray-500 text-sm">Registro ANS</p><p class="font-mono">{{ operadoraSelecionada?.RegistroANS }}</p></div>
+                            <div><p class="text-gray-500 text-sm">Modalidade</p><p>{{ operadoraSelecionada?.Modalidade }}</p></div>
+                            <div><p class="text-gray-500 text-sm">UF</p><p>{{ operadoraSelecionada?.UF }}</p></div>
+                        </div>
+
+                        <h4 class="font-bold text-gray-800 mb-3 border-b pb-2">Histórico de Despesas</h4>
+                        
+                        <div v-if="loadingDespesas" class="text-center py-4 text-gray-500">Buscando histórico...</div>
+                        <div v-else-if="despesasHistorico.length === 0" class="text-center py-4 text-gray-500">Nenhuma despesa registrada.</div>
+                        
+                        <table v-else class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-2 text-left">Data</th>
+                                    <th class="p-2 text-left">Trimestre</th>
+                                    <th class="p-2 text-right">Valor (R$)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(d, i) in despesasHistorico" :key="i" class="border-b">
+                                    <td class="p-2">{{ d.Data_Evento }}</td>
+                                    <td class="p-2">{{ d.Trimestre }}/{{ d.Ano }}</td>
+                                    <td class="p-2 text-right font-mono text-red-600">{{ d.Valor_Despesa.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const apiBase = 'http://127.0.0.1:8000/api';
+                
+                const operadoras = ref([]);
+                const loading = ref(false);
+                const page = ref(1);
+                const totalPages = ref(1);
+                const searchQuery = ref('');
+                const apiStatus = ref('Verificando...');
+                
+                // Modal e Detalhes
+                const modalOpen = ref(false);
+                const operadoraSelecionada = ref(null);
+                const despesasHistorico = ref([]);
+                const loadingDespesas = ref(false);
+
+                // Função de Fetch Principal
+                const fetchOperadoras = async () => {
+                    loading.value = true;
+                    try {
+                        const params = new URLSearchParams({
+                            page: page.value,
+                            limit: 10,
+                            search: searchQuery.value
+                        });
+                        
+                        const res = await fetch(`${apiBase}/operadoras?${params}`);
+                        const data = await res.json();
+                        
+                        operadoras.value = data.data;
+                        totalPages.value = data.meta.total_pages;
+                        apiStatus.value = 'Online 🟢';
+                    } catch (error) {
+                        console.error("Erro na API", error);
+                        apiStatus.value = 'Offline 🔴';
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                // Debounce simples para busca
+                let timeout = null;
+                const debounceSearch = () => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        page.value = 1; // Reseta para pág 1 na busca
+                        fetchOperadoras();
+                    }, 500);
+                };
+
+                const mudarPagina = (novaPagina) => {
+                    if (novaPagina >= 1 && novaPagina <= totalPages.value) {
+                        page.value = novaPagina;
+                        fetchOperadoras();
+                    }
+                };
+
+                // Detalhes
+                const abrirDetalhes = async (op) => {
+                    operadoraSelecionada.value = op;
+                    modalOpen.value = true;
+                    despesasHistorico.value = [];
+                    loadingDespesas.value = true;
+                    
+                    try {
+                        const res = await fetch(`${apiBase}/operadoras/${op.RegistroANS}/despesas`);
+                        if(res.ok) {
+                            despesasHistorico.value = await res.json();
+                        }
+                    } catch (error) {
+                        console.error("Erro ao buscar detalhes", error);
+                    } finally {
+                        loadingDespesas.value = false;
+                    }
+                };
+
+                // Gráfico
+                const carregarGrafico = async () => {
+                    try {
+                        const res = await fetch(`${apiBase}/estatisticas`);
+                        const dados = await res.json();
+                        
+                        if (dados.top_estados) {
+                            const ctx = document.getElementById('chartUF');
+                            new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: dados.top_estados.map(d => d.UF),
+                                    datasets: [{
+                                        label: 'Total de Despesas (R$)',
+                                        data: dados.top_estados.map(d => d.Despesa_Total),
+                                        backgroundColor: '#3B82F6',
+                                        borderRadius: 5
+                                    }]
+                                },
+                                options: { responsive: true }
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Erro no gráfico", error);
+                    }
+                };
+
+                onMounted(() => {
+                    fetchOperadoras();
+                    carregarGrafico();
+                });
+
+                return {
+                    operadoras, loading, page, totalPages, searchQuery,
+                    debounceSearch, mudarPagina, apiStatus,
+                    modalOpen, operadoraSelecionada, despesasHistorico, abrirDetalhes, loadingDespesas
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
