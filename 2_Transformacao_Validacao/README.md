@@ -56,4 +56,26 @@ Este módulo foi projetado para ser **modular**. Ele busca automaticamente os da
     O arquivo `despesas_agregadas.csv` será gerado na raiz da pasta.
 
 ---
-**👤 Autor:** Ítallo de Santana Guimarães
+
+## 📂 Estrutura do Módulo
+
+A solução foi arquitetada utilizando o padrão de **Separação de Responsabilidades (SoC)**, onde cada script dentro de `src/` possui uma função única e isolada.
+
+```text
+2_Transformacao_Validacao/
+│
+├── main.py                  # Ponto de entrada (Orquestrador do Pipeline)
+├── requirements.txt         # Lista de bibliotecas (Pandas, Requests)
+├── README.md                # Documentação técnica e justificativas
+├── despesas_agregadas.csv   # (Output) Relatório Final Gerado
+│
+├── src/                     # Código Fonte Modularizado
+│   ├── validator.py         # Lógica de validação matemática de CNPJ
+│   ├── enricher.py          # Lógica de download e Join com CADOP
+│   └── aggregator.py        # Lógica de estatística e agrupamento
+│
+└── data/                    # Diretório de entrada (Input)
+    └── .gitkeep             # Garante a existência da pasta no repositório
+```
+
+## 👤 Autor: Ítallo de Santana Guimarães
