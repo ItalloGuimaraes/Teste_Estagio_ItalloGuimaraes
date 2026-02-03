@@ -1,0 +1,33 @@
+# Regras para o Teste 1
+# Ignorar dados brutos e extraídos
+data/
+1_Leitura_Transformacao_Dados/data/
+
+# Regras para o Teste 2
+2_Transformacao_Validacao/data/*
+!2_Transformacao_Validacao/data/.gitkeep
+
+# Ignorar arquivos temporários do Python
+__pycache__/
+*.py[cod]
+
+# Ignorar ambientes virtuais
+.venv/
+venv/
+env/
+
+# Ignorar configurações do editor
+.vscode/
+.idea/
+
+# Ignorar arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar arquivos de dados gerados (Output)
+*.csv
+*.zip
+*.pdf
+
+# Mas permitir arquivos de documentação se houver (opcional)
+!documentation/*.pdf
